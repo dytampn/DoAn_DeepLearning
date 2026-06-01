@@ -116,13 +116,11 @@ def preprocess_plate(crop_img):
     if crop_img is None or crop_img.size == 0:
         return crop_img
         
-    # 1. Nâng độ phân giải ảnh nếu quá nhỏ (giúp OCR nhận diện ký tự tốt hơn)
     h, w = crop_img.shape[:2]
     if w < 180:
         scale = 180.0 / w
         crop_img = cv2.resize(crop_img, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_CUBIC)
         
-    # 2. Tăng cường độ tương phản thông qua CLAHE trên kênh Y (hệ màu YUV)
     yuv = cv2.cvtColor(crop_img, cv2.COLOR_BGR2YUV)
     clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
     yuv[:, :, 0] = clahe.apply(yuv[:, :, 0])

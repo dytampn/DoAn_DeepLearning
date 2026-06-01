@@ -5,21 +5,15 @@ import re
 import logging
 from paddleocr import PaddleOCR
 
-# ==========================================
-# ⚠️ QUAN TRỌNG: SỬA ĐƯỜNG DẪN Ổ CỨNG CỦA EM Ở ĐÂY
-# ==========================================
+
 IMAGE_FOLDER = r"C:\Users\Hi\Downloads\Dataset_SVTR\crop_results" 
 LABEL_FILE = r"C:\Users\Hi\Downloads\Dataset_SVTR\crop_results\label.txt" 
 # ==========================================
 
-# 1. Tắt các dòng log rác (spam) của thư viện
 logging.getLogger("ppocr").setLevel(logging.ERROR)
 
 print("Đang load mô hình PaddleOCR (Đã tắt oneDNN để fix lỗi C++)...")
 
-# 2. KHỞI TẠO MÔ HÌNH (Đã fix lỗi phiên bản và lỗi CPU Intel)
-# - use_textline_orientation: Tên tham số mới.
-# - enable_mkldnn=False: Bí kíp fix lỗi C++ NotImplementedError trên CPU.
 ocr = PaddleOCR(use_textline_orientation=False, lang='en', enable_mkldnn=False)
 
 def clean_text(text):
@@ -33,8 +27,7 @@ def hau_xu_ly(text):
     """Thuật toán Hậu xử lý (Post-processing) sửa lỗi AI dựa trên luật biển số VN"""
     if len(text) < 7: 
         return text # Ngắn quá bỏ qua
-        
-    # Xử lý Lỗi 2: Dư số 1 ở đầu do nhiễu viền (VD: 159L... -> 59L...)
+
     if len(text) >= 9 and text.startswith('1') and text[1].isdigit() and text[2].isdigit():
         text = text[1:]
         
@@ -85,7 +78,6 @@ for line in lines:
         
     total_images += 1
     
-    # 4. CHO AI ĐỌC ẢNH (Đã xóa cls=False gây lỗi)
     result = ocr.ocr(img_path)
     
     predicted_text = ""
@@ -102,7 +94,6 @@ for line in lines:
     
     if clean_pred == clean_true:
         correct_predictions += 1
-        # In thêm để xem nó có tự sửa đúng không
         if clean_pred != clean_pred_raw:
              print(f"[TỰ SỬA ĐÚNG] File: {filename} | AI gốc: {clean_pred_raw} -> Đã sửa: {clean_pred}")
     else:
