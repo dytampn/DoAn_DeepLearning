@@ -1,0 +1,29 @@
+# Môi trường ảo (Virtual Environment)
+env_bienso/
+venv/
+.venv/
+env/
+
+# Caches và file biên dịch Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Cho phép theo dõi code của PaddleOCR nhưng bỏ qua các file huấn luyện và lịch sử nặng
+PaddleOCR/.git/
+PaddleOCR/output/
+PaddleOCR/pretrain_models/
+PaddleOCR/en_PP-OCRv3_rec_train/
+
+# Các file tạm thời của Web app (ảnh/video tải lên)
+static/uploads/*
+!static/uploads/.gitkeep
+
+# IDE và cấu hình cá nhân
+.vscode/
+.idea/
+.gemini/
+.github/
+*.log

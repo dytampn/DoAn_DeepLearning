@@ -1,0 +1,13 @@
+train: train/images
+val: val/images
+test: test/images
+
+nc: 1
+names: ['bien_so']
+
+roboflow:
+  workspace: school-fuhih
+  project: vietnamese-license-plate-tptd0
+  version: 1
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/school-fuhih/vietnamese-license-plate-tptd0/dataset/1

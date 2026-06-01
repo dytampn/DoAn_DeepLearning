@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống Nhận diện Biển số Xe VN</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            --glass-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --primary: #10b981;
+            --primary-hover: #059669;
+            --secondary: #3b82f6;
+            --secondary-hover: #2563eb;
+            --accent: #f59e0b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --sidebar-width: 350px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Sidebar thiết kế Glassmorphism */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            border-right: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            z-index: 10;
+        }
+
+        .sidebar-header {
+            padding: 30px 20px;
+            border-bottom: 1px solid var(--glass-border);
+            text-align: center;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(to right, #6ee7b7, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-header p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .plate-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .plate-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: slideIn 0.3s ease-out forwards;
+        }
+
+        .plate-item:hover {
+            background: rgba(255, 255, 255, 0.06);
+            transform: translateY(-2px);
+            border-color: rgba(59, 130, 246, 0.5);
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
+        }
+
+        .plate-info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .plate-number {
+            font-family: monospace;
+            font-size: 1.25rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: var(--accent);
+        }
+
+        .plate-time {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .plate-badge {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--primary);
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 20px;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        /* Khu vực hiển thị chính */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            position: relative;
+        }
+
+        .main-header {
+            padding: 20px 40px;
+            background: rgba(15, 23, 42, 0.4);
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .main-header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .video-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .display-card {
+            width: 100%;
+            max-width: 900px;
+            height: 100%;
+            max-height: 550px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        .display-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transition: all 0.3s ease;
+        }
+
+        .placeholder-view {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .placeholder-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .placeholder-view h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-main);
+        }
+
+        .placeholder-view p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        /* Controls Panel */
+        .controls-bar {
+            padding: 20px 40px;
+            background: rgba(15, 23, 42, 0.4);
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .btn {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            padding: 12px 24px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: var(--secondary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .file-upload-input {
+            display: none;
+        }
+
+        /* Animations */
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar danh sách biển số -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>LỊCH SỬ NHẬN DIỆN</h2>
+            <p>Biển số nhận diện thời gian thực</p>
+        </div>
+        <div class="plate-list" id="plate-list-container">
+            <!-- Sẽ được điền động bằng JS -->
+            <div class="placeholder-view" id="sidebar-placeholder" style="margin-top: 50px;">
+                <p style="color: var(--text-muted);">Chưa có dữ liệu biển số</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Khu vực hiển thị camera và nút bấm -->
+    <div class="main-content">
+        <div class="main-header">
+            <h1>HỆ THỐNG ĐỌC BIỂN SỐ XE AI</h1>
+            <span class="plate-badge" style="background: rgba(59, 130, 246, 0.15); color: var(--secondary); border-color: rgba(59, 130, 246, 0.3)">Local Server</span>
+        </div>
+
+        <div class="video-container">
+            <div class="display-card" id="display-card">
+                <!-- Chế độ hiển thị luồng hoặc placeholder -->
+                <div class="placeholder-view" id="display-placeholder">
+                    <div class="placeholder-icon">👁️‍🗨️</div>
+                    <h3>Sẵn Sàng Nhận Diện</h3>
+                    <p>Hãy mở Webcam hoặc tải lên file ảnh/video để bắt đầu xử lý</p>
+                </div>
+                <img id="stream-view" src="" style="display: none;">
+            </div>
+        </div>
+
+        <div class="controls-bar">
+            <!-- Nút bật webcam -->
+            <button class="btn btn-primary" id="btn-webcam" onclick="toggleWebcam()">
+                📷 BẬT WEBCAM LIVE
+            </button>
+
+            <!-- Nút chọn file ảnh/video -->
+            <input type="file" id="file-uploader" class="file-upload-input" accept="image/*,video/*" onchange="uploadFile()">
+            <button class="btn btn-secondary" onclick="triggerFilePicker()">
+                📁 TẢI LÊN ẢNH / VIDEO
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let isWebcamOn = false;
+        let platePollInterval = null;
+        const detectedPlatesSet = new Set();
+
+        function triggerFilePicker() {
+            document.getElementById('file-uploader').click();
+        }
+
+        function toggleWebcam() {
+            const btn = document.getElementById('btn-webcam');
+            const streamImg = document.getElementById('stream-view');
+            const placeholder = document.getElementById('display-placeholder');
+
+            if (!isWebcamOn) {
+                // Tắt mọi file đang phát (nếu có)
+                streamImg.src = "/video_feed";
+                streamImg.style.display = "block";
+                placeholder.style.display = "none";
+                
+                btn.innerHTML = "⏹️ DỪNG WEBCAM";
+                btn.className = "btn btn-danger";
+                isWebcamOn = true;
+                
+                // Bắt đầu lấy danh sách biển số định kỳ
+                startPlatePolling();
+            } else {
+                // Tắt stream
+                fetch("/stop_feed").then(() => {
+                    streamImg.src = "";
+                    streamImg.style.display = "none";
+                    placeholder.style.display = "flex";
+                    
+                    btn.innerHTML = "📷 BẬT WEBCAM LIVE";
+                    btn.className = "btn btn-primary";
+                    isWebcamOn = false;
+                    
+                    stopPlatePolling();
+                });
+            }
+        }
+
+        function uploadFile() {
+            const fileInput = document.getElementById('file-uploader');
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            // Dừng webcam nếu đang phát
+            if (isWebcamOn) {
+                toggleWebcam();
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const placeholder = document.getElementById('display-placeholder');
+            const streamImg = document.getElementById('stream-view');
+            
+            // Hiển thị trạng thái đang xử lý
+            placeholder.innerHTML = `
+                <div class="placeholder-icon" style="animation: spin 2s linear infinite;">⏳</div>
+                <h3>Đang xử lý file...</h3>
+                <p>Mô hình AI đang phân tích dữ liệu</p>
+            `;
+            placeholder.style.display = "flex";
+            streamImg.style.display = "none";
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    if (data.type === 'video') {
+                        // Nếu là video, backend trả về một url streaming
+                        streamImg.src = `/video_feed_file?path=${encodeURIComponent(data.filepath)}`;
+                        streamImg.style.display = "block";
+                        placeholder.style.display = "none";
+                        startPlatePolling();
+                    } else {
+                        // Nếu là ảnh, hiển thị kết quả tĩnh
+                        streamImg.src = data.result_url + "?t=" + new Date().getTime();
+                        streamImg.style.display = "block";
+                        placeholder.style.display = "none";
+                        // Lấy biển số của lần nhận diện này
+                        updatePlatesList(data.plates);
+                    }
+                } else {
+                    alert('Có lỗi xảy ra: ' + data.message);
+                    resetPlaceholder();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Có lỗi xảy ra khi tải file!');
+                resetPlaceholder();
+            });
+        }
+
+        function resetPlaceholder() {
+            const placeholder = document.getElementById('display-placeholder');
+            placeholder.innerHTML = `
+                <div class="placeholder-icon">👁️‍🗨️</div>
+                <h3>Sẵn Sàng Nhận Diện</h3>
+                <p>Hãy mở Webcam hoặc tải lên file ảnh/video để bắt đầu xử lý</p>
+            `;
+            placeholder.style.display = "flex";
+            document.getElementById('stream-view').style.display = "none";
+        }
+
+        function startPlatePolling() {
+            if (platePollInterval) clearInterval(platePollInterval);
+            platePollInterval = setInterval(() => {
+                fetch('/get_latest_plates')
+                .then(response => response.json())
+                .then(plates => {
+                    updatePlatesList(plates);
+                });
+            }, 600);
+        }
+
+        function stopPlatePolling() {
+            if (platePollInterval) {
+                clearInterval(platePollInterval);
+                platePollInterval = null;
+            }
+        }
+
+        function updatePlatesList(plates) {
+            if (!plates || plates.length === 0) return;
+            
+            const container = document.getElementById('plate-list-container');
+            const placeholder = document.getElementById('sidebar-placeholder');
+            if (placeholder) placeholder.style.display = "none";
+
+            plates.forEach(plate => {
+                // Kiểm tra xem biển số này đã tồn tại chưa để tránh trùng lặp hiển thị
+                const uniqueKey = plate.text + "_" + plate.time;
+                if (!detectedPlatesSet.has(uniqueKey)) {
+                    detectedPlatesSet.add(uniqueKey);
+                    
+                    const item = document.createElement('div');
+                    item.className = 'plate-item';
+                    item.innerHTML = `
+                        <div class="plate-info">
+                            <span class="plate-number">${plate.text}</span>
+                            <span class="plate-time">⏰ ${plate.time}</span>
+                        </div>
+                        <span class="plate-badge">${plate.type || 'Đã đọc'}</span>
+                    `;
+                    
+                    // Thêm vào đầu danh sách
+                    container.insertBefore(item, container.firstChild);
+                }
+            });
+        }
+    </script>
+    <style>
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</body>
+</html>
